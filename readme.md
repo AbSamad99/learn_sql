@@ -66,6 +66,4 @@ The way an SQL query is written and the way it is executed internally by the dat
 3. Alter table - Add, Rename, Alter (change datatype), and Drop columns.
 4. Drop table - Delete the table.
 
-## Table Manupulation
-
-Refer the [following](./sql_files/table_manipulation_basics.sql)
+Refer the [following](./sql_files/table_manipulation_basics.sql) for a better idea.
