@@ -67,3 +67,93 @@ The way an SQL query is written and the way it is executed internally by the dat
 4. Drop table - Delete the table.
 
 Refer the [following](./sql_files/table_manipulation_basics.sql) for a better idea.
+
+## CASE
+
+In SQL, `CASE` is a conditional expression that allows you to perform different actions based on different conditions, similar to `IF-THEN-ELSE` logic in programming languages. The `CASE` statement evaluates a series of conditions and returns a result when the first condition is met. If no conditions are met, an optional `ELSE` part can provide a default result.
+
+There are 2 kinds of `CASE` expressions
+
+#### Simple CASE expression:
+
+The simple CASE expression compares an expression to a set of simple expressions to determine the result.
+
+```sql
+SELECT job_id,
+       job_title,
+       CASE job_schedule_type
+           WHEN 'FT' THEN 'Full-Time'
+           WHEN 'PT' THEN 'Part-Time'
+           WHEN 'CT' THEN 'Contract'
+           ELSE 'Unknown'
+       END AS schedule_description
+FROM job_postings_fact;
+```
+
+#### Searched CASE expression:
+
+The searched CASE expression evaluates a set of Boolean expressions to determine the result. It is a lot more powerfull as compared to the former.
+
+```sql
+SELECT job_id,
+       job_title,
+       salary,
+       CASE
+           WHEN salary > 100000 THEN 'High'
+           WHEN salary BETWEEN 50000 AND 100000 THEN 'Medium'
+           WHEN salary < 50000 THEN 'Low'
+           ELSE 'No Salary Information'
+       END AS salary_range
+FROM job_postings_fact;
+```
+
+Subqueries and Common Table Expressions (CTEs) are both SQL constructs used to perform complex queries by breaking them down into simpler, more manageable parts. However, they have different syntax, use cases, and benefits. Here is a detailed comparison:
+
+#### Subqueries
+
+A subquery (also known as an inner query or nested query) is a query within another SQL query. The subquery is executed first, and its result is used by the outer query. Subqueries can be placed in different parts of an SQL statement, such as the `SELECT` list, `FROM` clause, `WHERE` clause, or `HAVING` clause.
+
+**Types of Subqueries**:
+
+1. **Scalar Subquery**: Returns a single value (one row, one column).
+2. **Column Subquery**: Returns a single column with multiple rows.
+3. **Row Subquery**: Returns a single row with multiple columns.
+4. **Table Subquery**: Returns a full table (multiple rows and columns).
+
+**Example**:
+
+```sql
+SELECT employee_id, first_name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+```
+
+#### Common Table Expressions (CTEs)
+
+A Common Table Expression (CTE) is a temporary result set that you can reference within a `SELECT`, `INSERT`, `UPDATE`, or `DELETE` statement. CTEs are defined using the `WITH` clause and can be thought of as named subqueries. CTEs are more readable and easier to manage, especially for complex queries.
+
+**Example**:
+
+```sql
+WITH avg_salaries AS (
+    SELECT department_id, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
+)
+SELECT e.employee_id, e.first_name, e.salary, a.avg_salary
+FROM employees e
+JOIN avg_salaries a ON e.department_id = a.department_id
+WHERE e.salary > a.avg_salary;
+```
+
+#### Key Differences Between Subqueries and CTEs
+
+| Feature         | Subquery                                               | Common Table Expression (CTE)                                                                     |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| **Definition**  | A query within another query.                          | A temporary result set that can be referenced within a `SELECT`, `INSERT`, `UPDATE`, or `DELETE`. |
+| **Syntax**      | Placed directly in the `SELECT`, `FROM`, `WHERE`, etc. | Defined using the `WITH` keyword.                                                                 |
+| **Readability** | Can be less readable, especially when nested.          | More readable, allows for better organization of code.                                            |
+| **Reuse**       | Subqueries are not reusable within the same query.     | CTEs can be referenced multiple times within the same query.                                      |
+| **Recursion**   | Not suitable for recursion.                            | Can be used for recursive queries.                                                                |
+| **Performance** | May lead to repeated calculations in some cases.       | Often optimized by the database engine, more efficient for complex queries.                       |
+| **Scope**       | Limited to the statement in which they are used.       | Can be defined once and used in multiple places in the query.                                     |
