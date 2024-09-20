@@ -107,6 +107,8 @@ SELECT job_id,
 FROM job_postings_fact;
 ```
 
+## Subqueries and CTEs
+
 Subqueries and Common Table Expressions (CTEs) are both SQL constructs used to perform complex queries by breaking them down into simpler, more manageable parts. However, they have different syntax, use cases, and benefits. Here is a detailed comparison:
 
 #### Subqueries
@@ -116,16 +118,41 @@ A subquery (also known as an inner query or nested query) is a query within anot
 **Types of Subqueries**:
 
 1. **Scalar Subquery**: Returns a single value (one row, one column).
-2. **Column Subquery**: Returns a single column with multiple rows.
-3. **Row Subquery**: Returns a single row with multiple columns.
-4. **Table Subquery**: Returns a full table (multiple rows and columns).
-
-**Example**:
 
 ```sql
-SELECT employee_id, first_name, salary
+-- Find name of the employee with highest salary
+SELECT first_name, last_name
 FROM employees
-WHERE salary > (SELECT AVG(salary) FROM employees);
+WHERE salary = (SELECT MAX(salary) FROM employees);
+```
+
+2. **Column Subquery**: Returns a single column with multiple rows.
+
+```sql
+-- Find all the employees who work in the same department as other employees having a job title of 'Manager'
+SELECT employee_id, first_name, last_name
+FROM employees
+WHERE department_id IN (SELECT department_id FROM employees WHERE job_title = 'Manager');
+```
+
+3. **Row Subquery**: Returns a single row with multiple columns.
+
+```sql
+SELECT *
+FROM employees
+WHERE (salary, hire_date) = (SELECT salary, hire_date FROM employees WHERE employee_id = 101);
+```
+
+4. **Table Subquery**: Returns a full table (multiple rows and columns).
+
+```sql
+-- Find all the employees from the department with the highest average salary
+SELECT employee_id, first_name, last_name, department_id
+FROM employees
+WHERE department_id = (SELECT department_id
+                       FROM departments
+                       ORDER BY (SELECT AVG(salary) FROM employees WHERE employees.department_id = departments.department_id) DESC
+                       LIMIT 1);
 ```
 
 #### Common Table Expressions (CTEs)

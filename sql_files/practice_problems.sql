@@ -35,24 +35,24 @@ order by month;
  Write a query to find companies which have posted job offers with health insurance
  in the second quarter of 2023. Make use of date extraction
  */
-select *
-from job_postings_fact
-where extract(
-        month
-        from job_posted_date
-    ) between 5 and 8
-    and extract(
-        year
-        from job_posted_date
-    ) = 2023
-    and job_health_insurance is true;
+select distinct
+	cd."name" as company_name
+from company_dim as cd
+join job_postings_fact as jpf
+	on cd.company_id = jpf.company_id
+where 
+	extract(
+		month
+		from jpf.job_posted_date
+	) between 4 and 6
+	and jpf.job_health_insurance is true
 -- 
 -- 
 -- 
 -- 
 /*
  From the job_postings_fact table, create a new table which contains the jobs
- which were posted in january and february
+ which were posted in january and february (separate tables)
  */
 create table jan_job_postings_fact as
 select *
@@ -94,6 +94,15 @@ where skill_id in (
         order by count(*) desc
         limit 5
     );
+/*
+Using Join
+*/
+select sd.skills, count(sjd.job_id) as job_count
+from skills_dim as sd
+join skills_job_dim as sjd on sjd.skill_id = sd.skill_id
+group by sd.skills
+order by job_count desc
+limit 5;
 -- 
 -- 
 -- 
@@ -103,6 +112,7 @@ where skill_id in (
  1. Small: count < 10
  2. Medium: 10 < count < 50
  3. Large: count > 50
+ We will have to make use of CTE
  */
 with company_job_count as (
     select company_id,
@@ -132,14 +142,11 @@ from company_dim as cd
 with remote_job_skill as (
     select skill_id,
         count(*) as job_count
-    from (
-            select *
-            from skills_job_dim
-            where job_id in (
-                    select job_id
-                    from job_postings_fact
-                    where job_location = 'Anywhere'
-                )
+    from skills_job_dim
+    where job_id in (
+            select job_id
+            from job_postings_fact
+            where job_location = 'Anywhere'
         )
     group by skill_id
     order by job_count desc
@@ -166,3 +173,18 @@ select sd.*,
     rjs.job_count
 from skills_dim as sd
     inner join remote_job_skill as rjs on sd.skill_id = rjs.skill_id;
+/*
+ Another way
+ */
+select 
+	skdim.skills,
+	count(jobpost.job_id) as remote_job_count
+from skills_dim as skdim
+join skills_job_dim as skjob
+	on skdim.skill_id = skjob.skill_id
+join job_postings_fact as jobpost
+	on skjob.job_id = jobpost.job_id
+where jobpost.job_location = 'Anywhere'
+group by skdim.skills
+order by remote_job_count desc
+limit 5;
